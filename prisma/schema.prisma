@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  name         String
+  role         Role         @default(USER)
+  anonces      Anonce[]     @relation("AuthorAnonces")
+  reads        Read[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdVotes Vote[]       @relation("CreatedVotes") // votes created by admin
+  votesCast    VoteRecord[] // votes cast by user
+}
+
+model Anonce {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation("AuthorAnonces", fields: [authorId], references: [id], onDelete: Cascade)
+  reads     Read[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Read {
+  id       String   @id @default(uuid())
+  userId   String
+  anonceId String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonce   Anonce   @relation(fields: [anonceId], references: [id], onDelete: Cascade)
+  readAt   DateTime @default(now())
+
+  @@unique([userId, anonceId])
+}
+
+model Vote {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  active      Boolean      @default(false)
+  createdById String
+  createdBy   User         @relation("CreatedVotes", fields: [createdById], references: [id])
+  candidates  Candidate[]
+  voteRecords VoteRecord[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Candidate {
+  id          String       @id @default(uuid())
+  name        String
+  description String
+  voteId      String
+  vote        Vote         @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  records     VoteRecord[]
+}
+
+model VoteRecord {
+  id          String @id @default(uuid())
+  userId      String
+  candidateId String
+  voteId      String
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  vote      Vote      @relation(fields: [voteId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, voteId]) // One vote per user per vote
+}
+
+enum Role {
+  USER
+  ADMIN
+}
