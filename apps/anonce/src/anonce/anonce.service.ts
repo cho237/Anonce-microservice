@@ -7,7 +7,6 @@ import { CreateAnonceDto } from './dto/create-anonce.dto';
 import { Role } from '@prisma/client';
 import { PrismaService } from '@app/contracts/prisma/prisma.service';
 
-
 @Injectable()
 export class AnonceService {
   constructor(private prisma: PrismaService) {}
@@ -79,6 +78,16 @@ export class AnonceService {
     return this.prisma.read.findMany({
       where: { anonceId },
       include: { user: true },
+    });
+  }
+
+  async remove(id: string, userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can create articles');
+    }
+    return this.prisma.anonce.delete({
+      where: { id },
     });
   }
 }

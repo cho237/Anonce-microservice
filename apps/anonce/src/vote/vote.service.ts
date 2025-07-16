@@ -10,7 +10,6 @@ import { SetVoteStatusDto } from '@app/contracts/vote/set-vote-status.dto';
 export class VoteService {
   constructor(@Inject('VOTES_CLIENT') private votesClient: ClientProxy) {}
   create(createVoteDto: CreateVoteDto) {
-    console.log('Vote sent to microservice:', createVoteDto);
     return this.votesClient.send(VOTE_PATTERNS.CREATE, createVoteDto);
   }
 
@@ -20,6 +19,14 @@ export class VoteService {
 
   results(voteId: string) {
     return this.votesClient.send(VOTE_PATTERNS.VOTE_RESULTS, voteId);
+  }
+
+  findAll(isActive: boolean) {
+    return this.votesClient.send(VOTE_PATTERNS.FIND_ALL, isActive);
+  }
+
+  remove(id: string, userId: string) {
+    return this.votesClient.send(VOTE_PATTERNS.DELETE_VOTE, { id, userId });
   }
 
   voters(voteId: string) {

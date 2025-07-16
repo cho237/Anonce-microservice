@@ -16,9 +16,19 @@ export class VoteController {
     return this.voteService.createVote(createVoteDto.userId, createVoteDto);
   }
 
+  @MessagePattern(VOTE_PATTERNS.FIND_ALL)
+  findAll(@Payload() isActive: boolean) {
+    return this.voteService.findAll(isActive);
+  }
+
   @MessagePattern(VOTE_PATTERNS.CAST_VOTE)
   castVote(@Payload() castVoteDto: CastVoteDto) {
     return this.voteService.castVote(castVoteDto.userId, castVoteDto);
+  }
+
+  @MessagePattern(VOTE_PATTERNS.DELETE_VOTE)
+  remove(@Payload() deleteVote: { userId: string; voteId: string }) {
+    return this.voteService.remove(deleteVote.voteId, deleteVote.userId);
   }
 
   @MessagePattern(VOTE_PATTERNS.VOTE_RESULTS)

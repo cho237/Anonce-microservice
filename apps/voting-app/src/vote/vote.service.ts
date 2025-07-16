@@ -1,11 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@app/contracts/prisma/prisma.service';
 import { CreateVoteDto } from '@app/contracts/vote/create-vote.dto';
 import { CastVoteDto } from '@app/contracts/vote/cast-vote.dto';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class VoteService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(isActive: boolean) {
+    const votes = await this.prisma.vote.findMany({
+      where: { active: isActive },
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        candidates: true,
+      },
+    });
+    return { success: true, data: votes };
+  }
 
   async createVote(adminId: string, dto: CreateVoteDto) {
     try {
@@ -76,7 +88,15 @@ export class VoteService {
           },
         },
       });
-      return { success: true, data: results };
+
+      // Map _count.records to count
+      const formattedResults = results.map((candidate) => ({
+        id: candidate.id,
+        name: candidate.name,
+        count: candidate._count.records,
+      }));
+
+      return { success: true, data: formattedResults };
     } catch (error) {
       console.error('getVoteResults error:', error);
       return { success: false, message: 'Failed to get vote results' };
@@ -117,5 +137,13 @@ export class VoteService {
     }
   }
 
-  
+  async remove(id: string, userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can create articles');
+    }
+    return this.prisma.vote.delete({
+      where: { id },
+    });
+  }
 }

@@ -94,4 +94,15 @@ export class AnonceController {
   getArticleById(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.anonceService.getAnonceById(id);
   }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete anonce(Admin only)' })
+  @ApiResponse({ status: 200, description: 'Anonce deleted' })
+  @ApiResponse({ status: 404, description: 'Anonce not found' })
+  deleteAnonce(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetUser('userId') userId: string,
+  ) {
+    return this.anonceService.remove(id, userId);
+  }
 }

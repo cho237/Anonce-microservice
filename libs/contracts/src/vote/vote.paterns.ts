@@ -5,4 +5,5 @@ export const VOTE_PATTERNS = {
   GET_VOTERS: 'vote.getVoters',
   SET_VOTE_ACTIVE: 'vote.setVoteActive',
   FIND_ALL: 'vote.findAll',
+  DELETE_VOTE: 'vote.deleteVote', // New pattern for deleting a vote
 };

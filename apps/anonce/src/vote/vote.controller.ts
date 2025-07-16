@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { VoteService } from './vote.service';
 import { CastVoteDto } from '@app/contracts/vote/cast-vote.dto';
@@ -17,6 +18,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { GetUser } from '../user/decorator/get-user.decorator';
@@ -63,6 +65,16 @@ export class VoteController {
     return this.voteService.results(id);
   }
 
+ @ApiOperation({ summary: 'Get all votes (optionally filtered by active status)' })
+@ApiResponse({ status: 200, description: 'List of votes' })
+@ApiQuery({ name: 'isActive', required: false, type: Boolean })
+@UseGuards(JwtGuard)
+@Get('')
+findAll(@Query('isActive') isActive?: string) {
+  const isActiveBool = isActive === 'true';
+  return this.voteService.findAll(isActiveBool);
+}
+
   @ApiOperation({ summary: 'Get users who voted in a vote' })
   @ApiParam({ name: 'id', description: 'Vote ID' })
   @ApiResponse({ status: 200, description: 'List of voters' })
@@ -77,5 +89,13 @@ export class VoteController {
   @Patch('active')
   update(@Body() setVoteStatusDto: SetVoteStatusDto) {
     return this.voteService.voteStatus(setVoteStatusDto);
+  }
+
+  @ApiOperation({ summary: 'Delete vote (admin only)' })
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @Delete(':id')
+  remove(@Param('id') id: string, @GetUser('userId') userId: string) {
+    return this.voteService.remove(id, userId);
   }
 }

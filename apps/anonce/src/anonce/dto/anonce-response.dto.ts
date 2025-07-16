@@ -3,7 +3,6 @@ import { Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '../../user/dto/user-response-dto';
 
-
 export class AnonceResponseDto {
   @ApiProperty()
   @Expose()
@@ -21,6 +20,16 @@ export class AnonceResponseDto {
   @Expose()
   @Type(() => UserResponseDto)
   author: UserResponseDto;
+
+  @ApiProperty({ type: () => UserResponseDto })
+  @Expose()
+  @Type(() => UserResponseDto)
+  user: UserResponseDto;
+
+  @ApiProperty({ type: () => AnonceResponseDto })
+  @Expose()
+  @Type(() => AnonceResponseDto)
+  anonce: AnonceResponseDto;
 
   @ApiProperty()
   @Expose()
