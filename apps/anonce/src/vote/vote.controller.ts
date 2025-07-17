@@ -65,15 +65,17 @@ export class VoteController {
     return this.voteService.results(id);
   }
 
- @ApiOperation({ summary: 'Get all votes (optionally filtered by active status)' })
-@ApiResponse({ status: 200, description: 'List of votes' })
-@ApiQuery({ name: 'isActive', required: false, type: Boolean })
-@UseGuards(JwtGuard)
-@Get('')
-findAll(@Query('isActive') isActive?: string) {
-  const isActiveBool = isActive === 'true';
-  return this.voteService.findAll(isActiveBool);
-}
+  @ApiOperation({
+    summary: 'Get all votes (optionally filtered by active status)',
+  })
+  @ApiResponse({ status: 200, description: 'List of votes' })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @UseGuards(JwtGuard)
+  @Get('')
+  findAll(@Query('isActive') isActive?: string) {
+    const isActiveBool = isActive === 'true';
+    return this.voteService.findAll(isActiveBool);
+  }
 
   @ApiOperation({ summary: 'Get users who voted in a vote' })
   @ApiParam({ name: 'id', description: 'Vote ID' })

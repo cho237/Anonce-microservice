@@ -34,7 +34,11 @@ export class AnonceController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new anonce (Admin only)' })
-  @ApiResponse({ status: 201, description: 'Anonce created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Anonce created successfully',
+    type: AnonceResponseDto,
+  })
   @ApiResponse({ status: 403, description: 'Only admins can create anonce' })
   @UseGuards(JwtGuard)
   create(
@@ -46,7 +50,11 @@ export class AnonceController {
 
   @Get()
   @ApiOperation({ summary: 'Get all anonce' })
-  @ApiResponse({ status: 200, description: 'List of all anonce' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all anonce',
+    type: [AnonceResponseDto],
+  })
   getAllArticles() {
     return this.anonceService.findAll();
   }
