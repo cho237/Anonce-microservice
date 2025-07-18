@@ -13,7 +13,6 @@ import { SignInUserDto } from './dto/signin-user.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@app/contracts/prisma/prisma.service';
 
-
 @Injectable()
 export class UserService {
   constructor(
@@ -52,6 +51,12 @@ export class UserService {
     return {
       access_token: token,
     };
+  }
+
+  async findOne(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
   }
 
   async signToken(userId: string, email: string, role: Role) {

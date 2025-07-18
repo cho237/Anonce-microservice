@@ -21,8 +21,8 @@ export class VoteService {
     return this.votesClient.send(VOTE_PATTERNS.VOTE_RESULTS, voteId);
   }
 
-  findAll(isActive: boolean) {
-    return this.votesClient.send(VOTE_PATTERNS.FIND_ALL, isActive);
+  findAll(data: { userId: string; isActive: boolean }) {
+    return this.votesClient.send(VOTE_PATTERNS.FIND_ALL, data);
   }
 
   remove(id: string, userId: string) {

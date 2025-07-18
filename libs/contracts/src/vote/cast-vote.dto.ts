@@ -13,4 +13,8 @@ export class CastVoteDto {
   @ApiProperty({ description: 'ID of the candidate to vote for' })
   @IsString()
   candidateId: string;
+
+  @ApiProperty({ description: 'Password of user' })
+  @IsString()
+  password: string;
 }

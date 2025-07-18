@@ -26,6 +26,7 @@ export class AnonceService {
 
   findAll() {
     return this.prisma.anonce.findMany({
+      orderBy: { createdAt: 'desc' },
       include: { author: true },
     });
   }
@@ -49,15 +50,17 @@ export class AnonceService {
           anonceId,
         },
       },
+      include: { anonce: true },
     });
     if (exists) return exists; // Already marked
 
-    return this.prisma.read.create({
+    await this.prisma.read.create({
       data: {
         userId,
         anonceId,
       },
     });
+    return this.getReadAnonceForUser(userId);
   }
 
   // Get read status for user

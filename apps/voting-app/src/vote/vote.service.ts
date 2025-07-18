@@ -3,20 +3,41 @@ import { PrismaService } from '@app/contracts/prisma/prisma.service';
 import { CreateVoteDto } from '@app/contracts/vote/create-vote.dto';
 import { CastVoteDto } from '@app/contracts/vote/cast-vote.dto';
 import { Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class VoteService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(isActive: boolean) {
+  async findAll(data: { userId: string; isActive: boolean }) {
     const votes = await this.prisma.vote.findMany({
-      where: { active: isActive },
+      where: { active: data.isActive },
+      orderBy: { createdAt: 'desc' },
       include: {
-        createdBy: { select: { id: true, name: true, email: true } },
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
         candidates: true,
+        voteRecords: {
+          where: { userId: data.userId },
+          select: {
+            id: true,
+            candidateId: true,
+            voteId: true,
+            createdAt: true,
+          },
+        },
       },
     });
-    return { success: true, data: votes };
+
+    // Optionally format the data to simplify structure
+    const formatted = votes.map((vote) => ({
+      voteData: vote,
+      userVote: vote.voteRecords[0] || null,
+      voteRecords: undefined, // clean up if not needed
+    }));
+
+    return { success: true, data: formatted };
   }
 
   async createVote(adminId: string, dto: CreateVoteDto) {
@@ -45,6 +66,16 @@ export class VoteService {
 
   async castVote(userId: string, dto: CastVoteDto) {
     try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) return { success: false, message: 'User not found' };
+
+      const passwordMatch = await bcrypt.compare(dto.password, user.password);
+      if (!passwordMatch) {
+        return { success: false, message: 'Invalid password' };
+      }
+
       const vote = await this.prisma.vote.findUnique({
         where: { id: dto.voteId },
       });

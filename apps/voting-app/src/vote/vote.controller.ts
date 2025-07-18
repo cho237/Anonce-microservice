@@ -17,8 +17,8 @@ export class VoteController {
   }
 
   @MessagePattern(VOTE_PATTERNS.FIND_ALL)
-  findAll(@Payload() isActive: boolean) {
-    return this.voteService.findAll(isActive);
+  findAll(@Payload() data: { userId: string; isActive: boolean }) {
+    return this.voteService.findAll(data);
   }
 
   @MessagePattern(VOTE_PATTERNS.CAST_VOTE)

@@ -112,11 +112,12 @@ export class UserController {
   }
 
   @Get('auth/me')
+  @Serialize(UserResponseDto)
   @ApiOperation({ summary: 'Get logged user info' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 200, description: 'User Info', type: UserResponseDto })
   @UseGuards(JwtGuard)
-  getProfile(@GetUser() user: UserResponseDto) {
-    return user; // or fetch full user if needed
+  getProfile(@GetUser('userId') userId: string) {
+    return this.userService.findOne(userId); // or fetch full user if needed
   }
 }

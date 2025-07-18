@@ -72,9 +72,12 @@ export class VoteController {
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @UseGuards(JwtGuard)
   @Get('')
-  findAll(@Query('isActive') isActive?: string) {
-    const isActiveBool = isActive === 'true';
-    return this.voteService.findAll(isActiveBool);
+  findAll(
+    @GetUser('userId') userId: string,
+    @Query('isActive') isActiveBool?: string,
+  ) {
+    const isActive = isActiveBool === 'true';
+    return this.voteService.findAll({ userId, isActive });
   }
 
   @ApiOperation({ summary: 'Get users who voted in a vote' })
