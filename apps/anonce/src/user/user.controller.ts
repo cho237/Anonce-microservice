@@ -26,26 +26,26 @@ export class UserController {
 
   @Serialize(UserResponseDto)
   @Post('auth/signup')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully created' })
-  @ApiResponse({ status: 400, description: 'Invalid input validation' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiOperation({ summary: 'Enregistrer un nouvel utilisateur' })
+  @ApiResponse({ status: 201, description: 'Utilisateur créé avec succès' })
+  @ApiResponse({ status: 400, description: 'Données invalides' })
+  @ApiResponse({ status: 500, description: 'Erreur interne du serveur' })
   @ApiResponse({
     status: 409,
-    description: 'User with given email aready exist',
+    description: 'Un utilisateur avec cet e-mail existe déjà',
   })
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
   @Post('auth/signin')
-  @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'Login successfully ' })
-  @ApiResponse({ status: 403, description: 'Invalid credentials' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiOperation({ summary: 'Connexion de l’utilisateur' })
+  @ApiResponse({ status: 200, description: 'Connexion réussie' })
+  @ApiResponse({ status: 403, description: 'Identifiants invalides' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @ApiResponse({
     status: 409,
-    description: 'User with given email aready exist',
+    description: 'Un utilisateur avec cet e-mail existe déjà',
   })
   async signin(
     @Body() signInUserDto: SignInUserDto,
@@ -53,25 +53,21 @@ export class UserController {
   ) {
     const token = await this.userService.signin(signInUserDto);
 
-    // Set the HTTP-only cookie here
+    // Définir le cookie HTTP-only
     res.cookie('access_token', token.access_token, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24, // 1 day in ms
+      maxAge: 1000 * 60 * 60 * 24, // 1 jour
     });
 
-    // Return a success message, not the token
-    return { message: 'Login successful' };
+    // Retourner un message de succès
+    return { message: 'Connexion réussie' };
   }
 
   @Post('auth/logout')
-  @ApiOperation({ summary: 'Logout user' })
-  @ApiResponse({ status: 200, description: 'Logout successfully ' })
-  @ApiResponse({
-    status: 409,
-    description: 'User with given email aready exist',
-  })
+  @ApiOperation({ summary: 'Déconnexion de l’utilisateur' })
+  @ApiResponse({ status: 200, description: 'Déconnexion réussie' })
   async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', {
       httpOnly: true,
@@ -79,33 +75,27 @@ export class UserController {
       sameSite: 'lax',
     });
 
-    return { message: 'Logged out successfully' };
+    return { message: 'Déconnecté avec succès' };
   }
 
   @Serialize(UserResponseDto)
   @Get()
-  @ApiOperation({ summary: 'Get all users ' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 200, description: 'Users =', type: [UserResponseDto] })
+  @ApiOperation({ summary: 'Récupérer tous les utilisateurs' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des utilisateurs',
+    type: [UserResponseDto],
+  })
   @UseGuards(JwtGuard)
   findAll() {
     return this.userService.findAll();
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.userService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.update(+id, updateUserDto);
-  // }
-
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete user (Admin only)' })
-  @ApiResponse({ status: 200, description: 'User deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiOperation({ summary: 'Supprimer un utilisateur (Admin uniquement)' })
+  @ApiResponse({ status: 200, description: 'Utilisateur supprimé avec succès' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtGuard)
   remove(@Param('id') id: string, @GetUser('userId') userId: string) {
     return this.userService.remove(id, userId);
@@ -113,11 +103,17 @@ export class UserController {
 
   @Get('auth/me')
   @Serialize(UserResponseDto)
-  @ApiOperation({ summary: 'Get logged user info' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 200, description: 'User Info', type: UserResponseDto })
+  @ApiOperation({
+    summary: 'Récupérer les informations de l’utilisateur connecté',
+  })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
+  @ApiResponse({
+    status: 200,
+    description: 'Informations de l’utilisateur',
+    type: UserResponseDto,
+  })
   @UseGuards(JwtGuard)
   getProfile(@GetUser('userId') userId: string) {
-    return this.userService.findOne(userId); // or fetch full user if needed
+    return this.userService.findOne(userId);
   }
 }

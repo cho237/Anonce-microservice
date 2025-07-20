@@ -26,7 +26,10 @@ import { JwtGuard } from '../user/guard/jwt.guard';
 
 @ApiBearerAuth()
 @Controller('votes')
-@ApiResponse({ status: 400, description: 'Entrée invalide ou erreur de validation' })
+@ApiResponse({
+  status: 400,
+  description: 'Entrée invalide ou erreur de validation',
+})
 export class VoteController {
   constructor(private readonly voteService: VoteService) {}
 

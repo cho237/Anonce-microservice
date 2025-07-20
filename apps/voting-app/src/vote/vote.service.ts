@@ -45,9 +45,10 @@ export class VoteService {
         where: { id: adminId },
       });
       if (!user || user.role !== Role.ADMIN) {
-        throw new ForbiddenException(
-          'Seuls les administrateurs peuvent créer des votes',
-        );
+        return {
+          success: false,
+          message: 'Seuls les administrateurs peuvent créer des votes',
+        };
       }
       const vote = await this.prisma.vote.create({
         data: {
@@ -185,9 +186,10 @@ export class VoteService {
   async remove(id: string, userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException(
-        'Seuls les administrateurs peuvent créer des articles',
-      );
+      return {
+        success: false,
+        message: 'Seuls les administrateurs peuvent suprimer des vote',
+      };
     }
     return this.prisma.vote.delete({
       where: { id },
