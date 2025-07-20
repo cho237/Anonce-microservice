@@ -14,7 +14,7 @@ export class AnonceService {
   async createAnonce(userId: string, data: CreateAnonceDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can create articles');
+      throw new ForbiddenException('Seuls les administrateurs peuvent créer des annonces');
     }
     return this.prisma.anonce.create({
       data: {
@@ -31,17 +31,17 @@ export class AnonceService {
     });
   }
 
-  // Get one article
+  // Récupérer une annonce
   async getAnonceById(id: string) {
     const anonce = await this.prisma.anonce.findUnique({
       where: { id },
       include: { author: true },
     });
-    if (!anonce) throw new NotFoundException('Anonce not found');
+    if (!anonce) throw new NotFoundException("Annonce non trouvée");
     return anonce;
   }
 
-  // Mark anonce as read (User only)
+  // Marquer une annonce comme lue (utilisateur uniquement)
   async markAsRead(userId: string, anonceId: string) {
     const exists = await this.prisma.read.findUnique({
       where: {
@@ -52,7 +52,7 @@ export class AnonceService {
       },
       include: { anonce: true },
     });
-    if (exists) return exists; // Already marked
+    if (exists) return exists; // Déjà marquée comme lue
 
     await this.prisma.read.create({
       data: {
@@ -63,7 +63,7 @@ export class AnonceService {
     return this.getReadAnonceForUser(userId);
   }
 
-  // Get read status for user
+  // Récupérer les annonces lues par un utilisateur
   async getReadAnonceForUser(userId: string) {
     return this.prisma.read.findMany({
       where: { userId },
@@ -71,11 +71,11 @@ export class AnonceService {
     });
   }
 
-  // Get users who read an anonce (Admin only)
+  // Récupérer les utilisateurs ayant lu une annonce (admin uniquement)
   async getReadersForAnonce(adminId: string, anonceId: string) {
     const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
     if (!admin || admin.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can view readers');
+      throw new ForbiddenException('Seuls les administrateurs peuvent voir les lecteurs');
     }
 
     return this.prisma.read.findMany({
@@ -87,7 +87,7 @@ export class AnonceService {
   async remove(id: string, userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can create articles');
+      throw new ForbiddenException('Seuls les administrateurs peuvent supprimer des annonces');
     }
     return this.prisma.anonce.delete({
       where: { id },

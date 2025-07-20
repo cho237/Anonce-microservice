@@ -26,49 +26,49 @@ import { JwtGuard } from '../user/guard/jwt.guard';
 
 @ApiBearerAuth()
 @Controller('votes')
-@ApiResponse({ status: 400, description: 'Invalid input validation' })
+@ApiResponse({ status: 400, description: 'Entrée invalide ou erreur de validation' })
 export class VoteController {
   constructor(private readonly voteService: VoteService) {}
 
   @Post()
   @UseGuards(JwtGuard)
-  @ApiOperation({ summary: 'Create a new vote with candidates' })
+  @ApiOperation({ summary: 'Créer un nouveau vote avec des candidats' })
   @ApiBody({ type: CreateVoteDto })
-  @ApiResponse({ status: 201, description: 'Vote created' })
+  @ApiResponse({ status: 201, description: 'Vote créé avec succès' })
   create(
     @Body() createVoteDto: CreateVoteDto,
     @GetUser('userId') userId: string,
   ) {
-    createVoteDto.userId = userId; // Set the userId from the decorator
+    createVoteDto.userId = userId;
     return this.voteService.create(createVoteDto);
   }
 
-  @ApiOperation({ summary: 'Cast a vote for a candidate' })
+  @ApiOperation({ summary: 'Voter pour un candidat' })
   @ApiBody({ type: CastVoteDto })
-  @ApiResponse({ status: 201, description: 'Vote recorded' })
-  @ApiResponse({ status: 409, description: 'Already voted or voting closed' })
-  @Post('cast')
+  @ApiResponse({ status: 201, description: 'Vote enregistré' })
+  @ApiResponse({ status: 409, description: 'Déjà voté ou vote fermé' })
+  @Post('voter')
   @UseGuards(JwtGuard)
   castVote(
     @Body() castVoteDto: CastVoteDto,
     @GetUser('userId') userId: string,
   ) {
-    castVoteDto.userId = userId; // Set the userId from the decorator
+    castVoteDto.userId = userId;
     return this.voteService.castVote(castVoteDto);
   }
 
-  @ApiOperation({ summary: 'Get vote results with counts' })
-  @ApiParam({ name: 'id', description: 'Vote ID' })
-  @ApiResponse({ status: 200, description: 'Vote results' })
-  @Get(':id/results')
+  @ApiOperation({ summary: 'Obtenir les résultats d’un vote' })
+  @ApiParam({ name: 'id', description: 'ID du vote' })
+  @ApiResponse({ status: 200, description: 'Résultats du vote' })
+  @Get(':id/resultats')
   results(@Param('id') id: string) {
     return this.voteService.results(id);
   }
 
   @ApiOperation({
-    summary: 'Get all votes (optionally filtered by active status)',
+    summary: 'Obtenir tous les votes (filtrage possible par statut actif)',
   })
-  @ApiResponse({ status: 200, description: 'List of votes' })
+  @ApiResponse({ status: 200, description: 'Liste des votes' })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @UseGuards(JwtGuard)
   @Get('')
@@ -80,24 +80,22 @@ export class VoteController {
     return this.voteService.findAll({ userId, isActive });
   }
 
-  @ApiOperation({ summary: 'Get users who voted in a vote' })
-  @ApiParam({ name: 'id', description: 'Vote ID' })
-  @ApiResponse({ status: 200, description: 'List of voters' })
-  @Get(':id/voters')
+  @ApiOperation({ summary: 'Obtenir les utilisateurs ayant voté dans un vote' })
+  @ApiParam({ name: 'id', description: 'ID du vote' })
+  @ApiResponse({ status: 200, description: 'Liste des votants' })
+  @Get(':id/votants')
   voters(@Param('id') id: string) {
     return this.voteService.voters(id);
   }
 
-  @ApiOperation({ summary: 'Set vote active status (admin only)' })
+  @ApiOperation({ summary: 'Activer ou désactiver un vote (admin uniquement)' })
   @ApiBody({ type: SetVoteStatusDto })
-  @ApiBearerAuth()
-  @Patch('active')
+  @Patch('activer')
   update(@Body() setVoteStatusDto: SetVoteStatusDto) {
     return this.voteService.voteStatus(setVoteStatusDto);
   }
 
-  @ApiOperation({ summary: 'Delete vote (admin only)' })
-  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Supprimer un vote (admin uniquement)' })
   @UseGuards(JwtGuard)
   @Delete(':id')
   remove(@Param('id') id: string, @GetUser('userId') userId: string) {

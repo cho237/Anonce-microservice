@@ -25,7 +25,7 @@ export class UserService {
       where: { email: createUserDto.email },
     });
     if (user) {
-      throw new ConflictException('User with given email aready exist');
+      throw new ConflictException("Un utilisateur avec cet e-mail existe déjà");
     }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     return this.prisma.user.create({
@@ -42,12 +42,12 @@ export class UserService {
       where: { email: signInUserDto.email },
     });
     if (!user) {
-      throw new ForbiddenException('Invalid credentials');
+      throw new ForbiddenException("Identifiants invalides");
     }
     const pwMatch = await bcrypt.compare(signInUserDto.password, user.password);
-    if (!pwMatch) throw new ForbiddenException('Invalid credentials');
+    if (!pwMatch) throw new ForbiddenException("Identifiants invalides");
+    
     const token = await this.signToken(user.id, user.email, user.role);
-
     return {
       access_token: token,
     };
@@ -78,7 +78,7 @@ export class UserService {
   async remove(id: string, userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can create articles');
+      throw new ForbiddenException("Seuls les administrateurs peuvent supprimer des utilisateurs");
     }
     return this.prisma.user.delete({
       where: { id },

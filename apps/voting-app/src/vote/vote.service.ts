@@ -30,11 +30,10 @@ export class VoteService {
       },
     });
 
-    // Optionally format the data to simplify structure
     const formatted = votes.map((vote) => ({
       voteData: vote,
       userVote: vote.voteRecords[0] || null,
-      voteRecords: undefined, // clean up if not needed
+      voteRecords: undefined,
     }));
 
     return { success: true, data: formatted };
@@ -42,6 +41,14 @@ export class VoteService {
 
   async createVote(adminId: string, dto: CreateVoteDto) {
     try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: adminId },
+      });
+      if (!user || user.role !== Role.ADMIN) {
+        throw new ForbiddenException(
+          'Seuls les administrateurs peuvent créer des votes',
+        );
+      }
       const vote = await this.prisma.vote.create({
         data: {
           title: dto.title,
@@ -60,7 +67,7 @@ export class VoteService {
       return { success: true, data: vote };
     } catch (error) {
       console.error('createVote error:', error);
-      return { success: false, message: 'Failed to create vote' };
+      return { success: false, message: 'Échec de la création du vote' };
     }
   }
 
@@ -69,41 +76,40 @@ export class VoteService {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      if (!user) return { success: false, message: 'User not found' };
+      if (!user) return { success: false, message: 'Utilisateur non trouvé' };
 
       const passwordMatch = await bcrypt.compare(dto.password, user.password);
       if (!passwordMatch) {
-        return { success: false, message: 'Invalid password' };
+        return { success: false, message: 'Mot de passe invalide' };
       }
 
       const vote = await this.prisma.vote.findUnique({
         where: { id: dto.voteId },
       });
 
-      if (!vote) return { success: false, message: 'Vote not found' };
+      if (!vote) return { success: false, message: 'Vote non trouvé' };
       if (!vote.active)
-        return { success: false, message: 'Voting is currently closed' };
+        return { success: false, message: 'Le vote est actuellement fermé' };
 
       const existing = await this.prisma.voteRecord.findUnique({
         where: { userId_voteId: { userId, voteId: dto.voteId } },
       });
-      if (existing)
-        return { success: false, message: 'You have already voted.' };
+      if (existing) return { success: false, message: 'Vous avez déjà voté.' };
 
       const candidate = await this.prisma.candidate.findUnique({
         where: { id: dto.candidateId },
       });
       if (!candidate || candidate.voteId !== dto.voteId)
-        return { success: false, message: 'Invalid candidate for this vote' };
+        return { success: false, message: 'Candidat invalide pour ce vote' };
 
       await this.prisma.voteRecord.create({
         data: { userId, voteId: dto.voteId, candidateId: dto.candidateId },
       });
 
-      return { success: true, message: 'Vote recorded successfully' };
+      return { success: true, message: 'Vote enregistré avec succès' };
     } catch (error) {
       console.error('castVote error:', error);
-      return { success: false, message: 'Internal server error' };
+      return { success: false, message: 'Erreur interne du serveur' };
     }
   }
 
@@ -120,7 +126,6 @@ export class VoteService {
         },
       });
 
-      // Map _count.records to count
       const formattedResults = results.map((candidate) => ({
         id: candidate.id,
         name: candidate.name,
@@ -130,7 +135,10 @@ export class VoteService {
       return { success: true, data: formattedResults };
     } catch (error) {
       console.error('getVoteResults error:', error);
-      return { success: false, message: 'Failed to get vote results' };
+      return {
+        success: false,
+        message: 'Échec de la récupération des résultats du vote',
+      };
     }
   }
 
@@ -146,7 +154,10 @@ export class VoteService {
       return { success: true, data: voters };
     } catch (error) {
       console.error('getVoters error:', error);
-      return { success: false, message: 'Failed to get voters' };
+      return {
+        success: false,
+        message: 'Échec de la récupération des votants',
+      };
     }
   }
 
@@ -155,7 +166,7 @@ export class VoteService {
       const vote = await this.prisma.vote.findUnique({
         where: { id: voteId },
       });
-      if (!vote) return { success: false, message: 'Vote not found' };
+      if (!vote) return { success: false, message: 'Vote non trouvé' };
 
       const updated = await this.prisma.vote.update({
         where: { id: voteId },
@@ -164,14 +175,19 @@ export class VoteService {
       return { success: true, data: updated };
     } catch (error) {
       console.error('setVoteActiveStatus error:', error);
-      return { success: false, message: 'Failed to update vote status' };
+      return {
+        success: false,
+        message: 'Échec de la mise à jour du statut du vote',
+      };
     }
   }
 
   async remove(id: string, userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can create articles');
+      throw new ForbiddenException(
+        'Seuls les administrateurs peuvent créer des articles',
+      );
     }
     return this.prisma.vote.delete({
       where: { id },

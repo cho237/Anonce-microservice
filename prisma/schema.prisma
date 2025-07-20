@@ -80,4 +80,7 @@ model VoteRecord {
   @@unique([userId, voteId]) // One vote per user per vote
 }
 
- 
+ enum Role {
+  USER
+  ADMIN
+}
