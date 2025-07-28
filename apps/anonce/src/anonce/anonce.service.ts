@@ -11,17 +11,44 @@ import { PrismaService } from '@app/contracts/prisma/prisma.service';
 export class AnonceService {
   constructor(private prisma: PrismaService) {}
 
-  async createAnonce(userId: string, data: CreateAnonceDto) {
+  async createOrEditAnonce(userId: string, data: CreateAnonceDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seuls les administrateurs peuvent créer des annonces');
+      throw new ForbiddenException(
+        'Seuls les administrateurs peuvent créer ou modifier des annonces',
+      );
     }
-    return this.prisma.anonce.create({
-      data: {
-        ...data,
-        authorId: userId,
-      },
-    });
+
+    if (data.id) {
+      // Edit existing anonce
+      const existing = await this.prisma.anonce.findUnique({
+        where: { id: data.id },
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Annonce introuvable');
+      }
+
+      await this.prisma.anonce.update({
+        where: { id: data.id },
+        data: {
+          title: data.title,
+          content: data.content,
+          // any other fields in CreateAnonceDto
+        },
+      });
+    } else {
+      // Create new anonce
+      await this.prisma.anonce.create({
+        data: {
+          ...data,
+          authorId: userId,
+        },
+      });
+    }
+
+    return this.findAll();
   }
 
   findAll() {
@@ -37,7 +64,7 @@ export class AnonceService {
       where: { id },
       include: { author: true },
     });
-    if (!anonce) throw new NotFoundException("Annonce non trouvée");
+    if (!anonce) throw new NotFoundException('Annonce non trouvée');
     return anonce;
   }
 
@@ -75,7 +102,9 @@ export class AnonceService {
   async getReadersForAnonce(adminId: string, anonceId: string) {
     const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
     if (!admin || admin.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seuls les administrateurs peuvent voir les lecteurs');
+      throw new ForbiddenException(
+        'Seuls les administrateurs peuvent voir les lecteurs',
+      );
     }
 
     return this.prisma.read.findMany({
@@ -87,10 +116,14 @@ export class AnonceService {
   async remove(id: string, userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seuls les administrateurs peuvent supprimer des annonces');
+      throw new ForbiddenException(
+        'Seuls les administrateurs peuvent supprimer des annonces',
+      );
     }
-    return this.prisma.anonce.delete({
+    await this.prisma.anonce.delete({
       where: { id },
     });
+
+    return this.findAll();
   }
 }

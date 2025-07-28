@@ -57,6 +57,7 @@ export class VoteController {
     @GetUser('userId') userId: string,
   ) {
     castVoteDto.userId = userId;
+    console.log('Casting vote for user:', userId);
     return this.voteService.castVote(castVoteDto);
   }
 

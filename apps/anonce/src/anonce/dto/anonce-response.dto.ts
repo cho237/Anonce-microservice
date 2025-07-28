@@ -38,4 +38,8 @@ export class AnonceResponseDto {
   @ApiProperty()
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty()
+  @Expose()
+  readAt: Date;
 }

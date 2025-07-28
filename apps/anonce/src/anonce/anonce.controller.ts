@@ -37,7 +37,7 @@ export class AnonceController {
   @ApiResponse({
     status: 201,
     description: 'Annonce créée avec succès',
-    type: AnonceResponseDto,
+    type: [AnonceResponseDto],
   })
   @ApiResponse({
     status: 403,
@@ -48,7 +48,7 @@ export class AnonceController {
     @Body() createAnonceDto: CreateAnonceDto,
     @GetUser('userId') userId: string,
   ) {
-    return this.anonceService.createAnonce(userId, createAnonceDto);
+    return this.anonceService.createOrEditAnonce(userId, createAnonceDto);
   }
 
   @Get()
@@ -116,7 +116,11 @@ export class AnonceController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer une annonce (Admin uniquement)' })
-  @ApiResponse({ status: 200, description: 'Annonce supprimée' })
+  @ApiResponse({
+    status: 200,
+    description: 'Annonce supprimée',
+    type: [AnonceResponseDto],
+  })
   @ApiResponse({ status: 404, description: 'Annonce non trouvée' })
   @UseGuards(JwtGuard)
   deleteAnonce(

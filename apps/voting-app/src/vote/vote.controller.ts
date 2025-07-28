@@ -27,7 +27,7 @@ export class VoteController {
   }
 
   @MessagePattern(VOTE_PATTERNS.DELETE_VOTE)
-  remove(@Payload() deleteVote: { id: string, userId: string }) {
+  remove(@Payload() deleteVote: { id: string; userId: string }) {
     return this.voteService.remove(deleteVote.id, deleteVote.userId);
   }
 
