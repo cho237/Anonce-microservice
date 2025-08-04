@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common';
 import { AnonceService } from './anonce.service';
 import { CreateAnonceDto } from './dto/create-anonce.dto';
-import { UpdateAnonceDto } from './dto/update-anonce.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -22,6 +22,7 @@ import { GetUser } from '../user/decorator/get-user.decorator';
 import { JwtGuard } from '../user/guard/jwt.guard';
 import { Serialize } from '../interceptors/serialize.interceptor';
 import { AnonceResponseDto } from './dto/anonce-response.dto';
+import { CommentAnnonceDto } from './dto/comment-annonce.dto';
 
 @ApiTags('Annonces')
 @ApiResponse({ status: 401, description: 'Non autorisé' })
@@ -104,6 +105,43 @@ export class AnonceController {
     @Param('id', new ParseUUIDPipe()) anonceId: string,
   ) {
     return this.anonceService.getReadersForAnonce(userId, anonceId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('comment')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Commenter une annonce' })
+  @ApiBody({ type: CommentAnnonceDto })
+  @ApiResponse({ status: 201, description: 'Commentaire ajouté avec succès.' })
+  @ApiResponse({ status: 404, description: 'Annonce non trouvée.' })
+  async commentAnArticle(
+    @GetUser('userId') userId: string,
+    @Body() dto: CommentAnnonceDto,
+  ) {
+    // Assumes req.user contains the authenticated user with an id property
+    // Adjust according to your auth implementation
+    // @ts-ignore
+
+    return this.anonceService.commentAnArticle(userId, dto);
+  }
+
+  @Get(':id/details')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary:
+      "Obtenir les détails d'une annonce avec commentaires selon l'utilisateur",
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Détails de l'annonce avec commentaires (tous pour l'auteur, sinon seulement ceux de l'utilisateur)",
+  })
+  @ApiResponse({ status: 404, description: 'Annonce non trouvée' })
+  async getAnonceDetailsWithComments(
+    @Param('id', new ParseUUIDPipe()) anonceId: string,
+    @GetUser('userId') userId: string,
+  ) {
+    return this.anonceService.getAnonceDetailsWithComments(anonceId, userId);
   }
 
   @Get(':id')

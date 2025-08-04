@@ -2,6 +2,8 @@
 import { Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserResponseDto } from '../../user/dto/user-response-dto';
+import { CommentAnnonceDto } from './comment-annonce.dto';
+import { CommentResponseDto } from './comment-response.dto';
 
 export class AnonceResponseDto {
   @ApiProperty()
@@ -38,6 +40,11 @@ export class AnonceResponseDto {
   @ApiProperty()
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty({ type: () => [CommentResponseDto] })
+  @Expose()
+  @Type(() => CommentResponseDto)
+  comments: CommentResponseDto[];
 
   @ApiProperty()
   @Expose()

@@ -19,15 +19,28 @@ model User {
   updatedAt    DateTime     @updatedAt
   createdVotes Vote[]       @relation("CreatedVotes") // votes created by admin
   votesCast    VoteRecord[] // votes cast by user
+  comments     Comment[] // comments made by user
 }
 
 model Anonce {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
   content   String
   authorId  String
-  author    User     @relation("AuthorAnonces", fields: [authorId], references: [id], onDelete: Cascade)
+  author    User      @relation("AuthorAnonces", fields: [authorId], references: [id], onDelete: Cascade)
   reads     Read[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  comments  Comment[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  anonceId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  anonce    Anonce   @relation(fields: [anonceId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -80,7 +93,7 @@ model VoteRecord {
   @@unique([userId, voteId]) // One vote per user per vote
 }
 
- enum Role {
+enum Role {
   USER
   ADMIN
 }

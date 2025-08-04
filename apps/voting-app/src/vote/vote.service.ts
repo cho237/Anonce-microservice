@@ -10,8 +10,22 @@ export class VoteService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(data: { userId: string; isActive: boolean }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: data.userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Utilisateur non trouvé.');
+    }
+
+    const whereClause: any = {};
+
+    if (user.role !== Role.ADMIN) {
+      whereClause.active = data.isActive;
+    }
+
     const votes = await this.prisma.vote.findMany({
-      where: { active: data.isActive },
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
         createdBy: {
@@ -175,7 +189,6 @@ export class VoteService {
       });
       return { success: true, data: updated };
     } catch (error) {
-      console.error('setVoteActiveStatus error:', error);
       return {
         success: false,
         message: 'Échec de la mise à jour du statut du vote',
