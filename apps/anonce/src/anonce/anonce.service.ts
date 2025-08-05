@@ -15,7 +15,7 @@ export class AnonceService {
   async createOrEditAnonce(userId: string, data: CreateAnonceDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (!user || user.role !== Role.ADMIN) {
+    if (!user) {
       throw new ForbiddenException(
         'Seuls les administrateurs peuvent créer ou modifier des annonces',
       );
@@ -103,6 +103,7 @@ export class AnonceService {
     // Optionally, check if the anonce exists
     const anonce = await this.prisma.anonce.findUnique({
       where: { id: dto.anonceId },
+      include: { author: true },
     });
     if (!anonce) {
       throw new NotFoundException('Annonce non trouvée');
@@ -146,6 +147,7 @@ export class AnonceService {
     if (!anonce) throw new NotFoundException('Annonce non trouvée');
 
     let comments;
+
     if (anonce.authorId === userId) {
       // Author: show all comments
       comments = await this.prisma.comment.findMany({
@@ -154,11 +156,14 @@ export class AnonceService {
         orderBy: { createdAt: 'asc' },
       });
     } else {
-      // Not author: show only user's comments
+      // Not author: show user's comments + author's comments
       comments = await this.prisma.comment.findMany({
-        where: { anonceId, authorId: userId },
-        orderBy: { createdAt: 'asc' },
+        where: {
+          anonceId,
+          OR: [{ authorId: userId }, { authorId: anonce.authorId }],
+        },
         include: { author: true },
+        orderBy: { createdAt: 'asc' },
       });
     }
 

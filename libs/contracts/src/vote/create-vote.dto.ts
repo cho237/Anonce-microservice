@@ -13,6 +13,13 @@ export class CandidateInput {
 }
 
 export class CreateVoteDto {
+  @ApiProperty({
+    example: '392638ab-6ac1-4e0d-975f-021c51da0fba',
+    description: 'Identifiant du vote',
+  })
+  @IsString()
+  @IsOptional()
+  id: string;
   @ApiProperty({ description: 'Title of the vote' })
   @IsString()
   title: string;

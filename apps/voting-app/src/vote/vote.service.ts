@@ -58,31 +58,75 @@ export class VoteService {
       const user = await this.prisma.user.findUnique({
         where: { id: adminId },
       });
+
       if (!user || user.role !== Role.ADMIN) {
         return {
           success: false,
-          message: 'Seuls les administrateurs peuvent créer des votes',
+          message: 'Seuls les administrateurs peuvent gérer les votes',
         };
       }
-      const vote = await this.prisma.vote.create({
-        data: {
-          title: dto.title,
-          description: dto.description,
-          createdById: adminId,
-          candidates: {
-            create: dto.candidates.map((c) => ({
-              name: c.name,
-              description: c.description,
-            })),
+
+      if (dto.id) {
+        // Update existing vote
+        const existingVote = await this.prisma.vote.findUnique({
+          where: { id: dto.id },
+          include: { candidates: true },
+        });
+
+        if (!existingVote) {
+          return {
+            success: false,
+            message: 'Vote introuvable pour modification',
+          };
+        }
+
+        // Delete existing candidates (if you're replacing them)
+        await this.prisma.candidate.deleteMany({
+          where: { voteId: dto.id },
+        });
+
+        const updatedVote = await this.prisma.vote.update({
+          where: { id: dto.id },
+          data: {
+            title: dto.title,
+            description: dto.description,
+            candidates: {
+              create: dto.candidates.map((c) => ({
+                name: c.name,
+                description: c.description,
+              })),
+            },
           },
-          active: false,
-        },
-        include: { candidates: true },
-      });
-      return { success: true, data: vote };
+          include: { candidates: true },
+        });
+
+        return { success: true, data: updatedVote };
+      } else {
+        // Create new vote
+        const vote = await this.prisma.vote.create({
+          data: {
+            title: dto.title,
+            description: dto.description,
+            createdById: adminId,
+            candidates: {
+              create: dto.candidates.map((c) => ({
+                name: c.name,
+                description: c.description,
+              })),
+            },
+            active: false,
+          },
+          include: { candidates: true },
+        });
+
+        return { success: true, data: vote };
+      }
     } catch (error) {
-      console.error('createVote error:', error);
-      return { success: false, message: 'Échec de la création du vote' };
+      console.error('createOrUpdateVote error:', error);
+      return {
+        success: false,
+        message: 'Échec de la création du vote',
+      };
     }
   }
 
@@ -141,11 +185,13 @@ export class VoteService {
         },
       });
 
-      const formattedResults = results.map((candidate) => ({
-        id: candidate.id,
-        name: candidate.name,
-        count: candidate._count.records,
-      }));
+      const formattedResults = results
+        .map((candidate) => ({
+          id: candidate.id,
+          name: candidate.name,
+          count: candidate._count.records,
+        }))
+        .sort((a, b) => b.count - a.count); // Sort descending by count
 
       return { success: true, data: formattedResults };
     } catch (error) {
